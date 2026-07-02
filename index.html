@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Stock Médicaments - Infirmerie SCG</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Page de connexion -->
+    <div id="loginPage" class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>🏥 Infirmerie SCG</h1>
+                <p>Système de Gestion de Stock</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">👤 Nom d'utilisateur</label>
+                    <input type="text" id="username" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">🔒 Mot de passe</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div id="loginError" class="error-message"></div>
+                <button type="submit" class="btn btn-primary btn-block">Se connecter</button>
+            </form>
+            <div class="login-info">
+                <p><small>Par défaut - Utilisateur: <strong>admin</strong> | Mot de passe: <strong>admin123</strong></small></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application principale -->
+    <div id="mainApp" class="container" style="display: none;">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>📊 Infirmerie SCG</h1>
+                    <p>Gestion du Stock de Médicaments</p>
+                </div>
+                <div class="user-info">
+                    <span>👤 <strong id="currentUser"></strong></span>
+                    <button class="btn btn-logout" id="btnLogout">Déconnexion</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Onglets -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="stock">📦 Gestion du Stock</button>
+            <button class="tab-btn" data-tab="sorties">📤 Sorties de Stock</button>
+            <button class="tab-btn" data-tab="historique">📋 Historique</button>
+            <button class="tab-btn" data-tab="utilisateurs">👥 Utilisateurs</button>
+        </div>
+
+        <!-- Onglet Gestion du Stock -->
+        <div id="tabStock" class="tab-content active">
+            <!-- Statistiques -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>Total Médicaments</h3>
+                    <p id="totalMeds">0</p>
+                </div>
+                <div class="stat-card warning">
+                    <h3>Stock Faible</h3>
+                    <p id="lowStock">0</p>
+                </div>
+                <div class="stat-card danger">
+                    <h3>Périmés/Bientôt</h3>
+                    <p id="expiredSoon">0</p>
+                </div>
+                <div class="stat-card info">
+                    <h3>Sorties du Mois</h3>
+                    <p id="monthlyExits">0</p>
+                </div>
+            </div>
+
+            <!-- Formulaire d'ajout -->
+            <div class="form-section">
+                <h2>➕ Ajouter/Modifier un Médicament</h2>
+                <form id="medicamentForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nom">Nom du médicament *</label>
+                            <input type="text" id="nom" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="categorie">Catégorie *</label>
+                            <select id="categorie" required>
+                                <option value="">Sélectionner</option>
+                                <option value="Antalgique">Antalgique</option>
+                                <option value="Antibiotique">Antibiotique</option>
+                                <option value="Anti-inflammatoire">Anti-inflammatoire</option>
+                                <option value="Antiseptique">Antiseptique</option>
+                                <option value="Pansement">Pansement</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="quantite">Quantité *</label>
+                            <input type="number" id="quantite" min="0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="unite">Unité *</label>
+                            <select id="unite" required>
+                                <option value="Boîte">Boîte</option>
+                                <option value="Flacon">Flacon</option>
+                                <option value="Comprimé">Comprimé</option>
+                                <option value="Ampoule">Ampoule</option>
+                                <option value="Tube">Tube</option>
+                                <option value="Unité">Unité</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="seuilMin">Seuil Minimum</label>
+                            <input type="number" id="seuilMin" min="0" value="10">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dateExpiration">Date d'expiration</label>
+                            <input type="date" id="dateExpiration">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="emplacement">Emplacement</label>
+                            <input type="text" id="emplacement" placeholder="Ex: Armoire A, Étagère 2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="numeroLot">N° de Lot</label>
+                            <input type="text" id="numeroLot">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <span id="btnText">Ajouter</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="btnCancel">Annuler</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Filtres et recherche -->
+            <div class="filter-section">
+                <input type="text" id="searchInput" placeholder="🔍 Rechercher un médicament...">
+                
+                <select id="filterCategorie">
+                    <option value="">Toutes les catégories</option>
+                    <option value="Antalgique">Antalgique</option>
+                    <option value="Antibiotique">Antibiotique</option>
+                    <option value="Anti-inflammatoire">Anti-inflammatoire</option>
+                    <option value="Antiseptique">Antiseptique</option>
+                    <option value="Pansement">Pansement</option>
+                    <option value="Autre">Autre</option>
+                </select>
+
+                <select id="filterStock">
+                    <option value="">Tous les stocks</option>
+                    <option value="low">Stock faible</option>
+                    <option value="expired">Périmés/Bientôt</option>
+                </select>
+
+                <button class="btn btn-export" id="btnExport">📥 Exporter CSV</button>
+            </div>
+
+            <!-- Tableau des médicaments -->
+            <div class="table-section">
+                <h2>📋 Liste des Médicaments</h2>
+                <div class="table-responsive">
+                    <table id="medicamentsTable">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Catégorie</th>
+                                <th>Quantité</th>
+                                <th>Emplacement</th>
+                                <th>Date Exp.</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Sorties de Stock -->
+        <div id="tabSorties" class="tab-content">
+            <div class="form-section">
+                <h2>📤 Enregistrer une Sortie de Stock</h2>
+                <form id="sortieForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="sortieMedicament">Médicament *</label>
+                            <select id="sortieMedicament" required>
+                                <option value="">Sélectionner un médicament</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sortieQuantite">Quantité *</label>
+                            <input type="number" id="sortieQuantite" min="1" required>
+                            <small id="stockDisponible" class="text-muted"></small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sortieDestination">Destination/Patient *</label>
+                            <input type="text" id="sortieDestination" placeholder="Ex: Service Urgences, Patient X" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sortieMotif">Motif *</label>
+                            <select id="sortieMotif" required>
+                                <option value="">Sélectionner</option>
+                                <option value="Traitement patient">Traitement patient</option>
+                                <option value="Soins d'urgence">Soins d'urgence</option>
+                                <option value="Prévention">Prévention</option>
+                                <option value="Transfert service">Transfert service</option>
+                                <option value="Périmé">Périmé</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="sortieObservations">Observations</label>
+                            <textarea id="sortieObservations" rows="3" placeholder="Observations supplémentaires..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Enregistrer la sortie</button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelSortie">Annuler</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Liste des sorties récentes -->
+            <div class="table-section">
+                <h2>📋 Sorties Récentes</h2>
+                <div class="filter-section">
+                    <input type="date" id="filterDateDebut" placeholder="Date début">
+                    <input type="date" id="filterDateFin" placeholder="Date fin">
+                    <button class="btn btn-secondary" id="btnFilterSorties">Filtrer</button>
+                    <button class="btn btn-export" id="btnExportSorties">📥 Exporter</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date/Heure</th>
+                                <th>Médicament</th>
+                                <th>Quantité</th>
+                                <th>Destination</th>
+                                <th>Motif</th>
+                                <th>Utilisateur</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sortiesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Historique -->
+        <div id="tabHistorique" class="tab-content">
+            <div class="table-section">
+                <h2>📜 Historique des Activités</h2>
+                <div class="filter-section">
+                    <select id="filterTypeAction">
+                        <option value="">Toutes les actions</option>
+                        <option value="ajout">Ajout</option>
+                        <option value="modification">Modification</option>
+                        <option value="suppression">Suppression</option>
+                        <option value="sortie">Sortie</option>
+                    </select>
+                    <input type="date" id="filterHistoriqueDate">
+                    <button class="btn btn-secondary" id="btnFilterHistorique">Filtrer</button>
+                    <button class="btn btn-export" id="btnExportHistorique">📥 Exporter</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date/Heure</th>
+                                <th>Action</th>
+                                <th>Détails</th>
+                                <th>Utilisateur</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historiqueTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Utilisateurs -->
+        <div id="tabUtilisateurs" class="tab-content">
+            <div class="form-section">
+                <h2>👤 Ajouter un Utilisateur</h2>
+                <form id="userForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="newUsername">Nom d'utilisateur *</label>
+                            <input type="text" id="newUsername" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newPassword">Mot de passe *</label>
+                            <input type="password" id="newPassword" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newNomComplet">Nom complet *</label>
+                            <input type="text" id="newNomComplet" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newRole">Rôle *</label>
+                            <select id="newRole" required>
+                                <option value="utilisateur">Utilisateur</option>
+                                <option value="admin">Administrateur</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <span id="btnUserText">Ajouter l'utilisateur</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelUser">Annuler</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="table-section">
+                <h2>📋 Liste des Utilisateurs</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom d'utilisateur</th>
+                                <th>Nom complet</th>
+                                <th>Rôle</th>
+                                <th>Date création</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
